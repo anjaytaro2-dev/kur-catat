@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>kur.catat</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="kur.catat">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪙</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F5F5F9;--surface:#fff;--ink:#1C1F3A;--on-ink:#F5F5F9;--muted:#6A6D86;--line:#E3E4EE;--gold:#A8803A;--in:#18806A;--out:#B23A5E;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1121;--surface:#171A30;--ink:#ECEDF7;--on-ink:#0F1121;--muted:#9A9DB8;--line:#272B48;--gold:#D4AE6A;--in:#5CCBB0;--out:#EE86A5}}
+:root[data-theme="dark"]{--bg:#0F1121;--surface:#171A30;--ink:#ECEDF7;--on-ink:#0F1121;--muted:#9A9DB8;--line:#272B48;--gold:#D4AE6A;--in:#5CCBB0;--out:#EE86A5}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.55 'Plus Jakarta Sans',system-ui,sans-serif}
+main{max-width:720px;margin:0 auto;padding:20px 16px 56px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.brand{font:400 2rem/1 'Instrument Serif',Georgia,serif;margin:0;letter-spacing:.01em}
+.nav{display:flex;align-items:center;gap:4px;font-weight:600}
+.nav button{border:1px solid var(--line);background:var(--surface);color:var(--ink);width:32px;height:32px;border-radius:50%;font-size:1.1rem}
+.nav span{min-width:120px;text-align:center}
+button,select{font:inherit;cursor:pointer}
+button:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.ask{display:flex;gap:6px;margin-top:20px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:6px}
+.ask:focus-within{border-color:var(--gold);outline:2px solid var(--gold);outline-offset:2px}
+.ask input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:inherit;padding:12px;outline:0}
+.go{border:0;border-radius:11px;background:var(--ink);color:var(--on-ink);font-weight:600;padding:0 20px}
+.go:disabled{opacity:.5;cursor:wait}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 0}
+.chip{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;padding:3px 12px;font-size:.8rem}
+.status{min-height:1.6em;color:var(--muted);font-size:.85rem;margin:8px 0 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;margin-top:16px}
+h2{font:400 1.45rem/1.2 'Instrument Serif',Georgia,serif;margin:0 0 12px}
+.lab{color:var(--muted);font-size:.8rem}
+.bal{font:400 3.2rem/1.1 'Instrument Serif',Georgia,serif;font-variant-numeric:tabular-nums}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.stats b{display:block;font-size:.9rem;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.in{color:var(--in)}.out{color:var(--out)}
+.split{display:grid;grid-template-columns:210px 1fr;gap:20px;align-items:center}
+@media (max-width:540px){.split{grid-template-columns:1fr}.donut{max-width:230px;margin:0 auto}.bal{font-size:2.6rem}}
+.donut text{fill:var(--ink);text-anchor:middle}
+.lg{display:grid;grid-template-columns:10px 1fr 46px auto;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:.88rem}
+.lg:last-child{border:0}
+.lg i{width:10px;height:10px;border-radius:50%}
+.lg b{text-align:right}
+.num{font-variant-numeric:tabular-nums;color:var(--muted)}
+.empty{color:var(--muted);margin:4px 0}
+.row2{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{border:1px solid var(--ink);background:transparent;color:var(--ink);border-radius:10px;padding:8px 14px;font-weight:600}
+.btn.fill{background:var(--ink);color:var(--on-ink)}
+.btn:disabled{opacity:.5;cursor:wait}
+select{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:7px 10px}
+#advice:empty{display:none}
+#advice{margin-top:14px}
+#advice .lead{font:400 1.2rem/1.4 'Instrument Serif',Georgia,serif;margin:0 0 6px}
+#advice h3{font-size:.85rem;font-weight:700;margin:14px 0 4px;color:var(--gold)}
+#advice ul{margin:0;padding-left:18px}
+#advice li{margin:3px 0}
+#advice .note{color:var(--muted);font-size:.78rem;margin-top:14px}
+.txs{list-style:none;margin:12px 0 0;padding:0}
+.txs li{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+.txs .m{flex:1;min-width:0}
+.txs b{display:block;font-weight:600;overflow-wrap:anywhere}
+.txs small{display:block;color:var(--muted);font-size:.78rem}
+.txs select{padding:2px 6px;font-size:.78rem;border-radius:8px;margin:3px 0}
+.del{border:0;background:transparent;color:var(--muted);font-size:1.2rem;padding:6px 8px;border-radius:6px}
+.foot{color:var(--muted);font-size:.78rem;margin-top:28px}
+details.card summary{cursor:pointer;font-weight:600}
+.keyrow{display:flex;gap:8px;margin-top:12px}
+.keyrow input{flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:10px;font:inherit}
+.hint{color:var(--muted);font-size:.8rem;margin:10px 0 0}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1 class="brand">kur.catat</h1>
+    <div class="nav"><button id="pv" aria-label="Bulan sebelumnya">‹</button><span id="ml"></span><button id="nx" aria-label="Bulan berikutnya">›</button></div>
+  </header>
+
+  <form class="ask" id="f">
+    <input id="q" autocomplete="off" aria-label="Tulis transaksi" placeholder="makan siang 35rb jam 12.30">
+    <button class="go" id="btn" type="submit">Catat</button>
+  </form>
+  <div class="chips" id="chips">
+    <button class="chip" type="button">kopi 25rb</button>
+    <button class="chip" type="button">gaji 8jt</button>
+    <button class="chip" type="button">bensin 50 ribu kemarin jam 8 pagi</button>
+    <button class="chip" type="button">nabung emas 500rb</button>
+  </div>
+  <p class="status" id="status" aria-live="polite"></p>
+
+  <section class="card">
+    <div class="lab">Sisa uang bulan ini</div>
+    <div class="bal" id="bal">Rp0</div>
+    <div class="stats">
+      <div><span class="lab">Pemasukan</span><b class="in" id="inc"></b></div>
+      <div><span class="lab">Pengeluaran</span><b class="out" id="exp"></b></div>
+      <div><span class="lab">Ditabung &amp; diinvestasikan</span><b id="sav"></b><span class="lab" id="rate"></span></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Ke mana uang pergi</h2>
+    <div class="split"><div class="donut" id="donut"></div><div id="legend"></div></div>
+  </section>
+
+  <section class="card">
+    <h2>Saran keuangan dari AI</h2>
+    <div class="row2">
+      <select id="risk" aria-label="Profil risiko"><option value="konservatif">Risiko rendah</option><option value="moderat">Risiko sedang</option><option value="agresif">Risiko tinggi</option></select>
+      <button class="btn fill" id="ai" type="button">Analisis keuangan saya</button>
+    </div>
+    <div id="advice" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <h2>Riwayat</h2>
+    <div class="row2">
+      <select id="fc" aria-label="Filter kategori"></select>
+      <button class="btn" id="xl" type="button">Ekspor ke spreadsheet</button>
+    </div>
+    <ul class="txs" id="list"></ul>
+  </section>
+
+  <p class="foot">Data tersimpan di browser ini saja. Hanya teks yang Anda kirim ke AI yang diproses di luar perangkat. Saran AI bersifat edukatif, bukan nasihat keuangan berlisensi.</p>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const CATS = {
+  out: ['Makan & Minum','Belanja Harian','Transportasi','Tagihan & Utilitas','Tempat Tinggal','Kesehatan','Pendidikan','Hiburan & Langganan','Belanja & Gaya Hidup','Perawatan Diri','Keluarga & Anak','Sosial & Donasi','Cicilan & Utang','Asuransi','Perjalanan','Tabungan & Investasi','Lainnya'],
+  in: ['Gaji','Bonus & THR','Usaha','Freelance','Dividen & Investasi','Hadiah','Lainnya']
+};
+const SAVE = 'Tabungan & Investasi';
+const PAL = ['#3E4C9E','#B23A5E','#C79A3F','#18806A','#7A5BB0','#D2704B','#3B8FB5','#8A9A3B','#C45B9A','#5A6A7A','#9C7B5B','#4FA39A','#A04040','#6B7FD7','#2F6B4F','#8C8C9E','#B08AD0'];
+const colOf = c => PAL[Math.max(0, CATS.out.indexOf(c)) % PAL.length];
+const OLD = {'Makan & minum':'Makan & Minum','Transport':'Transportasi','Belanja':'Belanja & Gaya Hidup','Tagihan':'Tagihan & Utilitas','Hiburan':'Hiburan & Langganan','Bonus':'Bonus & THR'};
+const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const put = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+let tx = []; try { tx = JSON.parse(get('catat:tx') || '[]'); } catch (e) {}
+tx.forEach(t => { t.category = OLD[t.category] || t.category; if (!CATS[t.type]) t.type = 'out'; if (!CATS[t.type].includes(t.category)) t.category = 'Lainnya'; });
+const key = t => t.date + (t.time || '00:00');
+const sortTx = () => tx.sort((a, b) => key(b).localeCompare(key(a)) || b.id - a.id);
+sortTx();
+const save = () => put('catat:tx', JSON.stringify(tx));
+const rp = n => 'Rp' + new Intl.NumberFormat('id-ID', {maximumFractionDigits: 0}).format(n);
+const compact = n => 'Rp' + new Intl.NumberFormat('id-ID', {notation: 'compact', maximumFractionDigits: 1}).format(n);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const iso = d => new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+const daysAgo = n => { const d = new Date(); d.setDate(d.getDate() - n); return iso(d); };
+const nowTime = () => new Date().toTimeString().slice(0, 5);
+const longDate = d => new Date(d + 'T00:00').toLocaleDateString('id-ID', {weekday: 'long', day: 'numeric', month: 'short', year: 'numeric'});
+const say = t => { $('#status').textContent = t; };
+let ym = daysAgo(0).slice(0, 7);
+const mkey = o => iso(new Date(new Date().getFullYear(), new Date().getMonth() + o, 1)).slice(0, 7);
+
+function stat(k) {
+  const a = tx.filter(t => t.date.startsWith(k)), by = {};
+  let inn = 0, out = 0, sv = 0;
+  a.forEach(t => {
+    if (t.type === 'in') inn += t.amount;
+    else if (t.category === SAVE) sv += t.amount;
+    else { out += t.amount; by[t.category] = (by[t.category] || 0) + t.amount; }
+  });
+  return {a, inn, out, sv, by};
+}
+
+// Pembaca sederhana bila AI tidak tersedia
+function localParse(text) {
+  const t = text.toLowerCase();
+  let amt = 0;
+  const th = t.match(/\d{1,3}(?:\.\d{3})+/);
+  if (th) amt = +th[0].replace(/\./g, '');
+  else {
+    const m = t.replace(/jam\s*\d{1,2}([.:]\d{2})?/g, '').match(/(\d+(?:[.,]\d+)?)\s*(rb|ribu|k|jt|juta)?/);
+    if (m) { amt = parseFloat(m[1].replace(',', '.')); if (m[2] === 'jt' || m[2] === 'juta') amt *= 1e6; else if (m[2]) amt *= 1e3; }
+  }
+  if (!(amt > 0)) return [];
+  const isIn = /gaji|bonus|thr|terima|dapat|masuk|untung|dividen|freelance|honor/.test(t);
+  const map = [
+    [SAVE, /nabung|tabung|invest|reksa|saham|emas|deposito|sbn/],
+    ['Makan & Minum', /makan|minum|kopi|warteg|resto|bakso|sarapan|jajan|cafe/],
+    ['Belanja Harian', /sembako|pasar|supermarket|indomaret|alfamart|belanja bulanan/],
+    ['Transportasi', /bensin|ojek|grab|gojek|tol|parkir|bus|kereta|angkot|servis/],
+    ['Tagihan & Utilitas', /listrik|pulsa|internet|wifi|air pdam|token|gas|tagihan/],
+    ['Tempat Tinggal', /kos|sewa|kontrakan|kpr/],
+    ['Cicilan & Utang', /cicilan|utang|hutang|pinjol|kartu kredit/],
+    ['Hiburan & Langganan', /nonton|game|film|netflix|spotify|youtube|langganan/],
+    ['Kesehatan', /dokter|obat|apotek|rumah sakit|klinik/],
+    ['Pendidikan', /sekolah|kursus|buku|kuliah|spp/],
+    ['Perawatan Diri', /salon|barber|skincare|potong rambut/],
+    ['Keluarga & Anak', /anak|popok|susu|orang tua|ortu/],
+    ['Sosial & Donasi', /donasi|zakat|sedekah|kondangan|sumbangan/],
+    ['Asuransi', /asuransi|bpjs/],
+    ['Perjalanan', /tiket|hotel|liburan|wisata|pesawat/],
+    ['Belanja & Gaya Hidup', /belanja|beli|baju|sepatu|tas/]
+  ];
+  let cat = 'Lainnya';
+  if (isIn) cat = /gaji/.test(t) ? 'Gaji' : /bonus|thr/.test(t) ? 'Bonus & THR' : /dividen/.test(t) ? 'Dividen & Investasi' : /freelance|honor/.test(t) ? 'Freelance' : 'Lainnya';
+  else for (const [c, re] of map) if (re.test(t)) { cat = c; break; }
+  const date = /kemarin lusa/.test(t) ? daysAgo(2) : /kemarin/.test(t) ? daysAgo(1) : daysAgo(0);
+  let time = nowTime();
+  const tm = t.match(/jam\s*(\d{1,2})(?:[.:](\d{2}))?\s*(pagi|siang|sore|malam)?/);
+  if (tm) {
+    let h = +tm[1]; const p = tm[3];
+    if ((p === 'sore' || p === 'malam') && h < 12) h += 12;
+    if (p === 'siang' && h < 11) h += 12;
+    if (h < 24) time = String(h).padStart(2, '0') + ':' + (tm[2] || '00');
+  }
+  return [{type: isIn ? 'income' : 'expense', amount: Math.round(amt), category: cat, note: text.slice(0, 80), date, time}];
+}
+
+const FAST = 'quick', SMART = 'complex';
+async function getCap(n) {
+  try { return window.claude ? await window.claude.use(n) : null; } catch (e) { return null; }
+}
+async function askJSON(prompt, tier) {
+  const s = await getCap('sample');
+  if (!s) throw new Error('no-ai');
+  return s.json(prompt, {modelTier: tier, cache: false});
+}
+const errMsg = e => e && e.code === 'rate_limited' ? 'Terlalu banyak permintaan.' : 'Gagal memproses jawaban AI.';
+const loadXLSX = () => window.XLSX ? Promise.resolve() : new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+
+function clean(items) {
+  return (Array.isArray(items) ? items : []).map(i => {
+    const type = i.type === 'income' ? 'in' : 'out';
+    const amount = Math.round(Number(i.amount));
+    if (!(amount > 0)) return null;
+    return {
+      type, amount,
+      category: CATS[type].includes(i.category) ? i.category : 'Lainnya',
+      note: String(i.note || i.category || 'Transaksi').slice(0, 80),
+      date: /^\d{4}-\d{2}-\d{2}$/.test(i.date) ? i.date : daysAgo(0),
+      time: /^([01]\d|2[0-3]):[0-5]\d$/.test(i.time) ? i.time : nowTime()
+    };
+  }).filter(Boolean);
+}
+
+async function addFromText(text) {
+  const btn = $('#btn');
+  btn.disabled = true; say('Membaca catatan Anda…');
+  let items = null, viaAI = false, aiErr = '';
+  if (await getCap('sample')) {
+    try {
+      const now = new Date();
+      const prompt = `Kamu pencatat keuangan. Ubah kalimat pengguna menjadi daftar transaksi. Sekarang hari ${now.toLocaleDateString('id-ID', {weekday: 'long'})}, tanggal ${daysAgo(0)}, jam ${nowTime()}. ` +
+        `Mata uang Rupiah ("35rb"=35000, "2jt"=2000000, "50k"=50000). Jawab HANYA JSON: {"items":[{"type":"expense"|"income","amount":angka,"category":teks,"note":teks singkat,"date":"YYYY-MM-DD","time":"HH:MM"}]}. ` +
+        `Kategori pengeluaran (pilih satu persis): ${CATS.out.join(', ')}. Kategori pemasukan: ${CATS.in.join(', ')}. ` +
+        `Menabung, emas, reksa dana, saham = Tabungan & Investasi. Tanggal relatif (kemarin, Senin lalu) dihitung dari sekarang. Jika jam tidak disebut, pakai jam sekarang (24 jam). Jika tidak ada transaksi, items kosong.\n\nKalimat: ${text}`;
+      const r = await askJSON(prompt, FAST);
+      items = clean(r && r.items); viaAI = true;
+    } catch (e) { items = null; aiErr = errMsg(e); }
+  }
+  if (!items) items = clean(localParse(text));
+  btn.disabled = false;
+  if (!items.length) { say('Nominal tidak ditemukan. Coba tulis seperti: kopi 25rb.'); return false; }
+  const base = Date.now();
+  items.forEach((it, k) => tx.push({id: base + k, ...it}));
+  sortTx(); save(); ym = items[0].date.slice(0, 7); render();
+  say((items.length === 1 ? `Tercatat: ${items[0].note}, ${rp(items[0].amount)}, ${items[0].category}.` : `${items.length} transaksi tercatat.`) + (viaAI ? '' : ' (' + (aiErr || 'AI tidak tersedia.') + ' Memakai pembaca sederhana.)'));
+  return true;
+}
+
+function render() {
+  const s = stat(ym);
+  $('#ml').textContent = new Date(ym + '-01T00:00').toLocaleDateString('id-ID', {month: 'long', year: 'numeric'});
+  const bal = s.inn - s.out - s.sv;
+  $('#bal').textContent = rp(bal); $('#bal').className = 'bal' + (bal < 0 ? ' out' : '');
+  $('#inc').textContent = rp(s.inn); $('#exp').textContent = rp(s.out); $('#sav').textContent = rp(s.sv);
+  $('#rate').textContent = s.inn ? Math.round(s.sv / s.inn * 100) + '% dari pemasukan' : '';
+
+  const rows = Object.entries(s.by).sort((a, b) => b[1] - a[1]);
+  if (rows.length) {
+    let off = 25, segs = '';
+    rows.forEach(([c, v]) => { const p = v / s.out * 100; segs += `<circle r="15.9155" cx="21" cy="21" fill="none" stroke="${colOf(c)}" stroke-width="5" stroke-dasharray="${p} ${100 - p}" stroke-dashoffset="${off}"></circle>`; off -= p; });
+    $('#donut').innerHTML = `<svg viewBox="0 0 42 42" role="img" aria-label="Persentase pengeluaran per kategori"><circle r="15.9155" cx="21" cy="21" fill="none" stroke="var(--line)" stroke-width="5"></circle>${segs}<text x="21" y="20" font-size="2.6" style="fill:var(--muted)">Keluar</text><text x="21" y="25" font-size="5" font-family="Instrument Serif,serif">${compact(s.out)}</text></svg>`;
+    $('#legend').innerHTML = rows.map(([c, v]) => `<div class="lg"><i style="background:${colOf(c)}"></i><span>${esc(c)}</span><b>${Math.round(v / s.out * 1000) / 10}%</b><span class="num">${rp(v)}</span></div>`).join('');
+  } else {
+    $('#donut').innerHTML = ''; $('#legend').innerHTML = '<p class="empty">Belum ada pengeluaran di bulan ini.</p>';
+  }
+
+  const f = $('#fc').value;
+  const list = s.a.filter(t => !f || t.category === f);
+  $('#list').innerHTML = list.length ? list.map(t =>
+    `<li><div class="m"><b>${esc(t.note)}</b><select class="cs" data-id="${t.id}" aria-label="Ubah kategori">${CATS[t.type].map(c => `<option${c === t.category ? ' selected' : ''}>${esc(c)}</option>`).join('')}</select>` +
+    `<small>${longDate(t.date)}${t.time ? ', pukul ' + t.time : ''}</small></div>` +
+    `<span class="num ${t.type}">${t.type === 'in' ? '+' : '−'}${rp(t.amount)}</span><button class="del" data-id="${t.id}" aria-label="Hapus transaksi">×</button></li>`).join('')
+    : '<li class="empty">Tidak ada transaksi.</li>';
+}
+
+(() => {
+  const all = [...new Set([...CATS.out, ...CATS.in])];
+  $('#fc').innerHTML = '<option value="">Semua kategori</option>' + all.map(c => `<option>${esc(c)}</option>`).join('');
+  const r = get('catat:risk'); if (r) $('#risk').value = r;
+})();
+$('#risk').addEventListener('change', e => put('catat:risk', e.target.value));
+$('#fc').addEventListener('change', render);
+const shift = d => { const [y, m] = ym.split('-').map(Number); ym = iso(new Date(y, m - 1 + d, 1)).slice(0, 7); render(); };
+$('#pv').onclick = () => shift(-1); $('#nx').onclick = () => shift(1);
+
+$('#f').addEventListener('submit', async e => {
+  e.preventDefault();
+  const v = $('#q').value.trim();
+  if (v && await addFromText(v)) $('#q').value = '';
+});
+$('#chips').addEventListener('click', e => { if (e.target.classList.contains('chip')) { $('#q').value = e.target.textContent; $('#q').focus(); } });
+$('#list').addEventListener('click', e => {
+  const id = e.target.classList.contains('del') && e.target.dataset.id;
+  if (!id) return;
+  tx = tx.filter(t => String(t.id) !== id); save(); render(); say('Transaksi dihapus.');
+});
+$('#list').addEventListener('change', e => {
+  if (!e.target.classList.contains('cs')) return;
+  const t = tx.find(t => String(t.id) === e.target.dataset.id);
+  if (t) { t.category = e.target.value; save(); render(); say('Kategori diperbarui.'); }
+});
+
+let ctrl = null;
+$('#ai').addEventListener('click', async () => {
+  const box = $('#advice'), btn = $('#ai');
+  if (!tx.length) { box.innerHTML = '<p>Catat beberapa transaksi dulu agar AI punya data untuk dianalisis.</p>'; return; }
+  if (!(await getCap('sample'))) { box.innerHTML = '<p>Fitur saran AI tidak tersedia di tampilan ini.</p>'; return; }
+  const s = stat(ym);
+  const data = JSON.stringify({
+    bulan: ym, pemasukan: s.inn, pengeluaran: s.out, ditabungDiinvestasikan: s.sv,
+    persenPerKategori: Object.fromEntries(Object.entries(s.by).map(([c, v]) => [c, Math.round(v / (s.out || 1) * 1000) / 10])),
+    tigaBulanTerakhir: [-2, -1, 0].map(o => { const k = mkey(o), x = stat(k); return {bulan: k, masuk: x.inn, keluar: x.out, ditabung: x.sv}; }),
+    transaksiTerakhir: tx.slice(0, 20).map(t => [t.date, t.type === 'in' ? 'masuk' : 'keluar', t.category, t.note, t.amount])
+  });
+  btn.disabled = true; box.innerHTML = '<p class="empty">Menganalisis keuangan Anda…</p>';
+  try {
+    const r = await askJSON(`Kamu perencana keuangan pribadi berpengalaman di Indonesia. Profil risiko pengguna: ${$('#risk').value}. Data (Rupiah): ${data}\n\n` +
+      `Gunakan acuan: aturan 50/30/20, dana darurat 3–6 kali pengeluaran bulanan, lunasi utang berbunga tinggi lebih dulu, investasi bertahap sesuai profil risiko (contoh instrumen: reksa dana pasar uang, SBN ritel, emas, reksa dana indeks, saham) tanpa menjanjikan imbal hasil. Sebut angka dan persentase nyata dari data. ` +
+      `Jawab HANYA JSON: {"ringkasan":"2 kalimat","pengeluaran":["2-3 saran"],"pendapatan":["2 saran"],"investasi":["2-3 saran, sertakan usulan alokasi persen dari dana yang bisa diinvestasikan"],"langkah":"satu langkah terpenting minggu ini"}. Bahasa Indonesia, ringkas, tanpa markdown.`,
+      SMART);
+    const ul = a => '<ul>' + (Array.isArray(a) ? a : []).map(x => `<li>${esc(x)}</li>`).join('') + '</ul>';
+    box.innerHTML = `<p class="lead">${esc(r.ringkasan)}</p><h3>Pengeluaran</h3>${ul(r.pengeluaran)}<h3>Pendapatan</h3>${ul(r.pendapatan)}<h3>Investasi</h3>${ul(r.investasi)}<h3>Langkah minggu ini</h3><p>${esc(r.langkah)}</p><p class="note">Saran bersifat edukatif dan bukan nasihat keuangan berlisensi.</p>`;
+  } catch (e) {
+    box.innerHTML = '<p>' + (e && e.code === 'rate_limited' ? 'Terlalu banyak permintaan. Coba lagi sebentar lagi.' : 'Analisis gagal. Coba lagi.') + '</p>';
+  }
+  btn.disabled = false;
+});
+
+$('#xl').addEventListener('click', async () => {
+  if (!tx.length) { say('Belum ada data untuk diekspor.'); return; }
+  say('Menyiapkan spreadsheet…');
+  try { await loadXLSX(); } catch (e) { say('Pustaka spreadsheet gagal dimuat. Periksa koneksi internet.'); return; }
+  const dl = await getCap('downloads');
+  if (!dl) { say('Ekspor tidak tersedia di tampilan ini.'); return; }
+  const hari = d => new Date(d + 'T00:00').toLocaleDateString('id-ID', {weekday: 'long'});
+  const trx = [...tx].reverse().map(t => ({Tanggal: t.date, Hari: hari(t.date), Jam: t.time || '', Jenis: t.type === 'in' ? 'Pemasukan' : 'Pengeluaran', Kategori: t.category, Catatan: t.note, 'Jumlah (Rp)': t.amount}));
+  const months = [...new Set(tx.map(t => t.date.slice(0, 7)))].sort();
+  const ring = months.map(k => { const s = stat(k); return {Bulan: k, 'Pemasukan (Rp)': s.inn, 'Pengeluaran (Rp)': s.out, 'Ditabung/Investasi (Rp)': s.sv, 'Sisa (Rp)': s.inn - s.out - s.sv}; });
+  const kat = [];
+  months.forEach(k => { const s = stat(k); Object.entries(s.by).sort((a, b) => b[1] - a[1]).forEach(([c, v]) => kat.push({Bulan: k, Kategori: c, 'Total (Rp)': v, 'Persen (%)': Math.round(v / s.out * 1000) / 10})); });
+  const wb = XLSX.utils.book_new();
+  [['Transaksi', trx], ['Ringkasan Bulanan', ring], ['Per Kategori', kat]].forEach(([n, r]) => {
+    const ws = XLSX.utils.json_to_sheet(r.length ? r : [{Info: 'Tidak ada data'}]);
+    ws['!cols'] = Object.keys(r[0] || {Info: 1}).map(k => ({wch: Math.max(14, k.length + 2)}));
+    XLSX.utils.book_append_sheet(wb, ws, n);
+  });
+  const out = XLSX.write(wb, {bookType: 'xlsx', type: 'array'});
+  try { await dl.save({filename: `kur-catat-${daysAgo(0)}.xlsx`, data: new Blob([out])}); say('Spreadsheet siap disimpan.'); }
+  catch (e) { say(e && e.code === 'declined' ? 'Ekspor dibatalkan.' : 'Ekspor gagal. Coba lagi.'); }
+});
+
+render();
+</script>
+</body>
+</html>
