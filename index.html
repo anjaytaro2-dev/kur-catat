@@ -72,6 +72,7 @@ details.card summary{cursor:pointer;font-weight:600}
 .keyrow{display:flex;gap:8px;margin-top:12px}
 .keyrow input{flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:10px;font:inherit}
 .hint{color:var(--muted);font-size:.8rem;margin:10px 0 0}
+textarea{width:100%;margin-top:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:10px;font:12px/1.4 ui-monospace,Menlo,monospace}
 </style>
 </head>
 <body>
@@ -92,6 +93,14 @@ details.card summary{cursor:pointer;font-weight:600}
     <button class="chip" type="button">nabung emas 500rb</button>
   </div>
   <p class="status" id="status" aria-live="polite"></p>
+
+  <details class="card" id="setup">
+    <summary id="keystate">Hubungkan AI (kunci API)</summary>
+    <p class="hint">Tempel kunci API Gemini Anda. Kunci disimpan hanya di browser perangkat ini dan dikirim langsung ke Google, tidak ke server lain.</p>
+    <div class="keyrow"><input id="key" type="password" autocomplete="off" placeholder="AIza..." aria-label="Kunci API Gemini"><button class="btn fill" id="savekey" type="button">Simpan</button></div>
+    <div class="keyrow"><button class="btn" id="delkey" type="button">Hapus kunci dari perangkat ini</button></div>
+    <p class="hint">Buat kunci gratis di aistudio.google.com (menu Get API key). Tier gratis punya batas pemakaian harian. Tanpa kunci, aplikasi tetap mencatat dengan pembaca sederhana.</p>
+  </details>
 
   <section class="card">
     <div class="lab">Sisa uang bulan ini</div>
@@ -124,6 +133,13 @@ details.card summary{cursor:pointer;font-weight:600}
       <button class="btn" id="xl" type="button">Ekspor ke spreadsheet</button>
     </div>
     <ul class="txs" id="list"></ul>
+  </section>
+
+  <section class="card">
+    <h2>Cadangan &amp; pindah data</h2>
+    <p class="hint">Salin kode cadangan dari satu tempat, lalu tempel di tempat lain untuk memindahkan catatan. Pemulihan hanya menambah, tidak menghapus catatan yang sudah ada.</p>
+    <div class="row2" style="margin-top:12px"><button class="btn" id="bk" type="button">Buat kode cadangan</button><button class="btn" id="rs" type="button">Pulihkan dari kode</button></div>
+    <textarea id="bkbox" rows="5" spellcheck="false" aria-label="Kode cadangan" placeholder="Kode cadangan muncul di sini. Untuk memulihkan, tempel kode di sini lalu ketuk Pulihkan dari kode."></textarea>
   </section>
 
   <p class="foot">Data tersimpan di browser ini saja. Hanya teks yang Anda kirim ke AI yang diproses di luar perangkat. Saran AI bersifat edukatif, bukan nasihat keuangan berlisensi.</p>
@@ -214,17 +230,23 @@ function localParse(text) {
   return [{type: isIn ? 'income' : 'expense', amount: Math.round(amt), category: cat, note: text.slice(0, 80), date, time}];
 }
 
-const FAST = 'quick', SMART = 'complex';
-async function getCap(n) {
-  try { return window.claude ? await window.claude.use(n) : null; } catch (e) { return null; }
+const FAST = 'gemini-2.5-flash', SMART = 'gemini-2.5-flash';
+const apiKey = () => get('catat:gkey') || '';
+async function askJSON(prompt, model) {
+  const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent', {
+    method: 'POST',
+    headers: {'content-type': 'application/json', 'x-goog-api-key': apiKey()},
+    body: JSON.stringify({contents: [{parts: [{text: prompt}]}], generationConfig: {responseMimeType: 'application/json'}})
+  });
+  if (!res.ok) { const e = new Error('http'); e.status = res.status; throw e; }
+  const d = await res.json();
+  const parts = (d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts) || [];
+  const txt = parts.map(x => x.text || '').join('').replace(/```json|```/g, '').trim();
+  return JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
 }
-async function askJSON(prompt, tier) {
-  const s = await getCap('sample');
-  if (!s) throw new Error('no-ai');
-  return s.json(prompt, {modelTier: tier, cache: false});
-}
-const errMsg = e => e && e.code === 'rate_limited' ? 'Terlalu banyak permintaan.' : 'Gagal memproses jawaban AI.';
+const errMsg = e => e && (e.status === 400 || e.status === 403) ? 'Permintaan ditolak. Periksa kunci API Gemini Anda.' : e && e.status === 429 ? 'Batas pemakaian gratis habis. Coba lagi nanti.' : e && e.status ? 'Layanan AI error (' + e.status + ').' : 'Gagal terhubung atau memproses jawaban AI.';
 const loadXLSX = () => window.XLSX ? Promise.resolve() : new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+const keyUI = () => { $('#keystate').textContent = apiKey() ? 'AI terhubung ✓ (ketuk untuk mengubah kunci)' : 'Hubungkan AI (kunci API)'; };
 
 function clean(items) {
   return (Array.isArray(items) ? items : []).map(i => {
@@ -245,7 +267,7 @@ async function addFromText(text) {
   const btn = $('#btn');
   btn.disabled = true; say('Membaca catatan Anda…');
   let items = null, viaAI = false, aiErr = '';
-  if (await getCap('sample')) {
+  if (apiKey()) {
     try {
       const now = new Date();
       const prompt = `Kamu pencatat keuangan. Ubah kalimat pengguna menjadi daftar transaksi. Sekarang hari ${now.toLocaleDateString('id-ID', {weekday: 'long'})}, tanggal ${daysAgo(0)}, jam ${nowTime()}. ` +
@@ -262,7 +284,7 @@ async function addFromText(text) {
   const base = Date.now();
   items.forEach((it, k) => tx.push({id: base + k, ...it}));
   sortTx(); save(); ym = items[0].date.slice(0, 7); render();
-  say((items.length === 1 ? `Tercatat: ${items[0].note}, ${rp(items[0].amount)}, ${items[0].category}.` : `${items.length} transaksi tercatat.`) + (viaAI ? '' : ' (' + (aiErr || 'AI tidak tersedia.') + ' Memakai pembaca sederhana.)'));
+  say((items.length === 1 ? `Tercatat: ${items[0].note}, ${rp(items[0].amount)}, ${items[0].category}.` : `${items.length} transaksi tercatat.`) + (viaAI ? '' : ' (' + (aiErr || 'AI belum terhubung.') + ' Memakai pembaca sederhana.)'));
   return true;
 }
 
@@ -324,7 +346,7 @@ let ctrl = null;
 $('#ai').addEventListener('click', async () => {
   const box = $('#advice'), btn = $('#ai');
   if (!tx.length) { box.innerHTML = '<p>Catat beberapa transaksi dulu agar AI punya data untuk dianalisis.</p>'; return; }
-  if (!(await getCap('sample'))) { box.innerHTML = '<p>Fitur saran AI tidak tersedia di tampilan ini.</p>'; return; }
+  if (!apiKey()) { box.innerHTML = '<p>Hubungkan AI dulu: buka bagian "Hubungkan AI" di atas dan masukkan kunci API.</p>'; return; }
   const s = stat(ym);
   const data = JSON.stringify({
     bulan: ym, pemasukan: s.inn, pengeluaran: s.out, ditabungDiinvestasikan: s.sv,
@@ -341,7 +363,7 @@ $('#ai').addEventListener('click', async () => {
     const ul = a => '<ul>' + (Array.isArray(a) ? a : []).map(x => `<li>${esc(x)}</li>`).join('') + '</ul>';
     box.innerHTML = `<p class="lead">${esc(r.ringkasan)}</p><h3>Pengeluaran</h3>${ul(r.pengeluaran)}<h3>Pendapatan</h3>${ul(r.pendapatan)}<h3>Investasi</h3>${ul(r.investasi)}<h3>Langkah minggu ini</h3><p>${esc(r.langkah)}</p><p class="note">Saran bersifat edukatif dan bukan nasihat keuangan berlisensi.</p>`;
   } catch (e) {
-    box.innerHTML = '<p>' + (e && e.code === 'rate_limited' ? 'Terlalu banyak permintaan. Coba lagi sebentar lagi.' : 'Analisis gagal. Coba lagi.') + '</p>';
+    box.innerHTML = '<p>' + esc(errMsg(e)) + '</p>';
   }
   btn.disabled = false;
 });
@@ -350,8 +372,6 @@ $('#xl').addEventListener('click', async () => {
   if (!tx.length) { say('Belum ada data untuk diekspor.'); return; }
   say('Menyiapkan spreadsheet…');
   try { await loadXLSX(); } catch (e) { say('Pustaka spreadsheet gagal dimuat. Periksa koneksi internet.'); return; }
-  const dl = await getCap('downloads');
-  if (!dl) { say('Ekspor tidak tersedia di tampilan ini.'); return; }
   const hari = d => new Date(d + 'T00:00').toLocaleDateString('id-ID', {weekday: 'long'});
   const trx = [...tx].reverse().map(t => ({Tanggal: t.date, Hari: hari(t.date), Jam: t.time || '', Jenis: t.type === 'in' ? 'Pemasukan' : 'Pengeluaran', Kategori: t.category, Catatan: t.note, 'Jumlah (Rp)': t.amount}));
   const months = [...new Set(tx.map(t => t.date.slice(0, 7)))].sort();
@@ -365,11 +385,48 @@ $('#xl').addEventListener('click', async () => {
     XLSX.utils.book_append_sheet(wb, ws, n);
   });
   const out = XLSX.write(wb, {bookType: 'xlsx', type: 'array'});
-  try { await dl.save({filename: `kur-catat-${daysAgo(0)}.xlsx`, data: new Blob([out])}); say('Spreadsheet siap disimpan.'); }
-  catch (e) { say(e && e.code === 'declined' ? 'Ekspor dibatalkan.' : 'Ekspor gagal. Coba lagi.'); }
+  try {
+    const url = URL.createObjectURL(new Blob([out], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+    const a = document.createElement('a'); a.href = url; a.download = `kur-catat-${daysAgo(0)}.xlsx`;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000);
+    say('Spreadsheet diunduh.');
+  } catch (e) { say('Ekspor gagal. Coba lagi.'); }
 });
 
-render();
+$('#savekey').addEventListener('click', () => {
+  const v = $('#key').value.trim();
+  if (!v) { say('Tempel kunci API dulu.'); return; }
+  put('catat:gkey', v); $('#key').value = ''; keyUI(); $('#setup').open = false; say('Kunci tersimpan. AI siap dipakai.');
+});
+$('#delkey').addEventListener('click', () => { put('catat:gkey', ''); keyUI(); say('Kunci dihapus dari perangkat ini.'); });
+keyUI(); render();
+$('#bk').addEventListener('click', async () => {
+  const box = $('#bkbox');
+  box.value = JSON.stringify({app: 'kur.catat', v: 1, tx});
+  box.focus(); box.select();
+  let ok = false;
+  try { await navigator.clipboard.writeText(box.value); ok = true; } catch (e) { try { ok = document.execCommand('copy'); } catch (e2) {} }
+  say(ok ? 'Kode cadangan (' + tx.length + ' transaksi) disalin. Tempel di tempat tujuan.' : 'Kode cadangan (' + tx.length + ' transaksi) siap. Tekan lama kolom, pilih Pilih Semua lalu Salin.');
+});
+$('#rs').addEventListener('click', () => {
+  let d;
+  try { d = JSON.parse($('#bkbox').value.trim()); } catch (e) { say('Kode tidak valid. Pastikan seluruh kode tertempel.'); return; }
+  const arr = Array.isArray(d) ? d : d && Array.isArray(d.tx) ? d.tx : null;
+  if (!arr) { say('Kode tidak valid.'); return; }
+  const ids = new Set(tx.map(t => String(t.id)));
+  let added = 0;
+  arr.forEach(t => {
+    if (!t || !CATS[t.type] || !(Number(t.amount) > 0) || !/^\d{4}-\d{2}-\d{2}$/.test(t.date)) return;
+    const id = t.id != null ? t.id : Date.now() + added;
+    if (ids.has(String(id))) return;
+    ids.add(String(id));
+    const c = OLD[t.category] || t.category;
+    tx.push({id, type: t.type, amount: Math.round(Number(t.amount)), category: CATS[t.type].includes(c) ? c : 'Lainnya', note: String(t.note || '').slice(0, 80), date: t.date, time: /^([01]\d|2[0-3]):[0-5]\d$/.test(t.time) ? t.time : ''});
+    added++;
+  });
+  sortTx(); save(); render(); $('#bkbox').value = '';
+  say(added ? added + ' transaksi dipulihkan.' : 'Tidak ada transaksi baru (semua sudah ada).');
+});
 </script>
 </body>
 </html>
